@@ -24,7 +24,7 @@ provider "azurerm" {
     }
     
     key_vault {
-      purge_soft_delete_on_destroy = true
+      purge_soft_delete_on_destroy = false
       recover_soft_deleted_key_vaults = true
     }
   }
@@ -135,7 +135,8 @@ resource "azurerm_key_vault" "main" {
   
   network_acls {
     bypass         = "AzureServices"
-    default_action = "Allow"
+    default_action = "Deny"
+    ip_rules       = var.allowed_ip_addresses
   }
   
   tags = var.common_tags

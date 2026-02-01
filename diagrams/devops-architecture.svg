@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+  <defs>
+    <style>
+      .box { fill: #0078D4; stroke: #005A9E; stroke-width: 2; }
+      .text { fill: white; font-family: Arial, sans-serif; font-size: 14px; text-anchor: middle; }
+      .title { fill: #333; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; text-anchor: middle; }
+      .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#333" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="400" y="40" class="title">Azure DevOps Architecture</text>
+  
+  <!-- Source Control -->
+  <rect x="50" y="80" width="150" height="80" class="box" rx="5"/>
+  <text x="125" y="115" class="text">Azure Repos</text>
+  <text x="125" y="135" class="text">(Git)</text>
+  
+  <!-- CI Pipeline -->
+  <rect x="250" y="80" width="150" height="80" class="box" rx="5"/>
+  <text x="325" y="115" class="text">Azure Pipelines</text>
+  <text x="325" y="135" class="text">(CI/CD)</text>
+  
+  <!-- Artifacts -->
+  <rect x="450" y="80" width="150" height="80" class="box" rx="5"/>
+  <text x="525" y="115" class="text">Azure Artifacts</text>
+  <text x="525" y="135" class="text">(Packages)</text>
+  
+  <!-- Deploy to Azure -->
+  <rect x="650" y="80" width="120" height="80" class="box" rx="5"/>
+  <text x="710" y="115" class="text">Azure</text>
+  <text x="710" y="135" class="text">Resources</text>
+  
+  <!-- Infrastructure as Code -->
+  <rect x="150" y="220" width="150" height="80" class="box" rx="5"/>
+  <text x="225" y="255" class="text">Terraform</text>
+  <text x="225" y="275" class="text">(IaC)</text>
+  
+  <!-- Configuration Management -->
+  <rect x="350" y="220" width="150" height="80" class="box" rx="5"/>
+  <text x="425" y="255" class="text">Ansible</text>
+  <text x="425" y="275" class="text">(Config Mgmt)</text>
+  
+  <!-- Monitoring -->
+  <rect x="200" y="360" width="180" height="80" class="box" rx="5"/>
+  <text x="290" y="395" class="text">Azure Monitor</text>
+  <text x="290" y="415" class="text">(Logs &amp; Metrics)</text>
+  
+  <!-- Security -->
+  <rect x="420" y="360" width="180" height="80" class="box" rx="5"/>
+  <text x="510" y="395" class="text">Azure Security</text>
+  <text x="510" y="415" class="text">(Key Vault, RBAC)</text>
+  
+  <!-- Arrows -->
+  <path d="M 200 120 L 250 120" class="arrow"/>
+  <path d="M 400 120 L 450 120" class="arrow"/>
+  <path d="M 600 120 L 650 120" class="arrow"/>
+  <path d="M 325 160 L 225 220" class="arrow"/>
+  <path d="M 325 160 L 425 220" class="arrow"/>
+  <path d="M 225 300 L 290 360" class="arrow"/>
+  <path d="M 425 300 L 510 360" class="arrow"/>
+  <path d="M 710 160 L 710 480 L 290 480 L 290 440" class="arrow"/>
+  
+  <!-- Legend -->
+  <text x="50" y="520" style="fill: #666; font-size: 12px;">DevOps Workflow:</text>
+  <text x="50" y="540" style="fill: #666; font-size: 11px;">Code → Build → Test → Package → Deploy → Monitor</text>
+</svg>

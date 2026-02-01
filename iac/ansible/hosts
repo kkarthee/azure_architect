@@ -1,0 +1,94 @@
+# Ansible Inventory File
+# This file defines the hosts and groups for Ansible deployment
+
+# Development Environment
+[dev_web_servers]
+dev-web-01.example.com ansible_host=10.0.1.10
+dev-web-02.example.com ansible_host=10.0.1.11
+
+[dev_app_servers]
+dev-app-01.example.com ansible_host=10.0.2.10
+dev-app-02.example.com ansible_host=10.0.2.11
+
+[dev_db_servers]
+dev-db-01.example.com ansible_host=10.0.3.10
+
+# Staging Environment
+[staging_web_servers]
+staging-web-01.example.com ansible_host=10.1.1.10
+staging-web-02.example.com ansible_host=10.1.1.11
+
+[staging_app_servers]
+staging-app-01.example.com ansible_host=10.1.2.10
+staging-app-02.example.com ansible_host=10.1.2.11
+
+[staging_db_servers]
+staging-db-01.example.com ansible_host=10.1.3.10
+
+# Production Environment
+[prod_web_servers]
+prod-web-01.example.com ansible_host=10.2.1.10
+prod-web-02.example.com ansible_host=10.2.1.11
+prod-web-03.example.com ansible_host=10.2.1.12
+
+[prod_app_servers]
+prod-app-01.example.com ansible_host=10.2.2.10
+prod-app-02.example.com ansible_host=10.2.2.11
+prod-app-03.example.com ansible_host=10.2.2.12
+
+[prod_db_servers]
+prod-db-01.example.com ansible_host=10.2.3.10
+prod-db-02.example.com ansible_host=10.2.3.11
+
+# Group definitions
+[web_servers:children]
+dev_web_servers
+staging_web_servers
+prod_web_servers
+
+[app_servers:children]
+dev_app_servers
+staging_app_servers
+prod_app_servers
+
+[db_servers:children]
+dev_db_servers
+staging_db_servers
+prod_db_servers
+
+[development:children]
+dev_web_servers
+dev_app_servers
+dev_db_servers
+
+[staging:children]
+staging_web_servers
+staging_app_servers
+staging_db_servers
+
+[production:children]
+prod_web_servers
+prod_app_servers
+prod_db_servers
+
+# Common variables for all hosts
+[all:vars]
+ansible_user=azureuser
+ansible_connection=ssh
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+# Environment-specific variables
+[development:vars]
+environment=dev
+app_port=8080
+debug_mode=true
+
+[staging:vars]
+environment=staging
+app_port=8080
+debug_mode=false
+
+[production:vars]
+environment=production
+app_port=8080
+debug_mode=false

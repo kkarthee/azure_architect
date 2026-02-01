@@ -1,0 +1,223 @@
+---
+# Ansible Playbook for Application Deployment
+# Usage: ansible-playbook -i hosts deploy.yml
+
+- name: Deploy Application to Azure Infrastructure
+  hosts: all
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    app_name: "devops-app"
+    app_user: "appuser"
+    app_group: "appgroup"
+    app_port: 8080
+    app_path: "/opt/{{ app_name }}"
+    app_version: "latest"
+    environment: "{{ lookup('env', 'ENVIRONMENT') | default('dev', true) }}"
+    log_path: "/var/log/{{ app_name }}"
+    
+  tasks:
+    - name: Display deployment information
+      debug:
+        msg: "Deploying {{ app_name }} version {{ app_version }} to {{ environment }} environment"
+    
+    - name: Update apt cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+    
+    - name: Update yum cache (RedHat/CentOS)
+      yum:
+        update_cache: yes
+      when: ansible_os_family == "RedHat"
+    
+    - name: Install required packages (Debian/Ubuntu)
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - python3
+          - python3-pip
+          - nginx
+        state: present
+      when: ansible_os_family == "Debian"
+    
+    - name: Install required packages (RedHat/CentOS)
+      yum:
+        name:
+          - curl
+          - wget
+          - git
+          - python3
+          - python3-pip
+          - nginx
+        state: present
+      when: ansible_os_family == "RedHat"
+    
+    - name: Create application group
+      group:
+        name: "{{ app_group }}"
+        state: present
+    
+    - name: Create application user
+      user:
+        name: "{{ app_user }}"
+        group: "{{ app_group }}"
+        shell: /bin/bash
+        home: "{{ app_path }}"
+        create_home: yes
+        state: present
+    
+    - name: Create application directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+      loop:
+        - "{{ app_path }}"
+        - "{{ app_path }}/bin"
+        - "{{ app_path }}/config"
+        - "{{ app_path }}/data"
+        - "{{ log_path }}"
+    
+    - name: Copy application configuration
+      template:
+        src: templates/app.config.j2
+        dest: "{{ app_path }}/config/app.config"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0644'
+      when: false  # Template file needs to be created
+      notify: restart application
+    
+    - name: Deploy application binary
+      copy:
+        src: "files/{{ app_name }}"
+        dest: "{{ app_path }}/bin/{{ app_name }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+      when: false  # Application binary needs to be provided
+      notify: restart application
+    
+    - name: Configure systemd service
+      template:
+        src: templates/app.service.j2
+        dest: "/etc/systemd/system/{{ app_name }}.service"
+        owner: root
+        group: root
+        mode: '0644'
+      when: false  # Template file needs to be created
+      notify:
+        - reload systemd
+        - restart application
+    
+    - name: Configure Nginx
+      template:
+        src: templates/nginx.conf.j2
+        dest: "/etc/nginx/sites-available/{{ app_name }}"
+        owner: root
+        group: root
+        mode: '0644'
+      when: false  # Template file needs to be created
+      notify: restart nginx
+    
+    - name: Enable Nginx site
+      file:
+        src: "/etc/nginx/sites-available/{{ app_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ app_name }}"
+        state: link
+      when: false  # Configure after template is created
+      notify: restart nginx
+    
+    - name: Ensure Nginx is enabled and started
+      systemd:
+        name: nginx
+        enabled: yes
+        state: started
+    
+    - name: Install Python application dependencies
+      pip:
+        name:
+          - requests
+          - flask
+          - gunicorn
+        state: present
+        executable: pip3
+      when: false  # Enable when needed
+    
+    - name: Configure firewall (UFW)
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "80"
+        - "443"
+        - "{{ app_port }}"
+      when: ansible_os_family == "Debian" and false  # Enable when UFW is configured
+    
+    - name: Set up log rotation
+      template:
+        src: templates/logrotate.j2
+        dest: "/etc/logrotate.d/{{ app_name }}"
+        owner: root
+        group: root
+        mode: '0644'
+      when: false  # Template file needs to be created
+    
+    - name: Check application health
+      uri:
+        url: "http://localhost:{{ app_port }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+      retries: 5
+      delay: 10
+      when: false  # Enable after application is deployed
+    
+    - name: Display deployment status
+      debug:
+        msg: "Application deployed successfully to {{ environment }} environment"
+  
+  handlers:
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes
+    
+    - name: restart application
+      systemd:
+        name: "{{ app_name }}"
+        state: restarted
+        enabled: yes
+    
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+# Post-deployment tasks
+- name: Post-deployment validation
+  hosts: all
+  gather_facts: no
+  
+  tasks:
+    - name: Wait for application to be ready
+      wait_for:
+        port: 8080
+        delay: 5
+        timeout: 60
+      when: false  # Enable after application is deployed
+    
+    - name: Run smoke tests
+      command: echo "Smoke tests would run here"
+      changed_when: false
+    
+    - name: Send deployment notification
+      debug:
+        msg: "Deployment completed. Environment: {{ environment }}"

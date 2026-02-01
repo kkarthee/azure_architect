@@ -1,0 +1,25 @@
+---
+- name: Deploy application to hosts
+  hosts: all
+  become: true
+  vars_files:
+    - vars/common.yml
+  tasks:
+    - name: Ensure app directory exists
+      file:
+        path: /opt/myapp
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Pull container image (if using docker)
+      community.docker.docker_image:
+        name: "{{ docker_image }}"
+        source: pull
+
+    - name: Ensure service is running (systemd)
+      systemd:
+        name: myapp
+        enabled: yes
+        state: restarted

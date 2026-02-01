@@ -1,0 +1,8 @@
+[dev]
+onprem-app-01 ansible_host=10.10.10.10
+
+[test]
+onprem-app-02 ansible_host=10.10.10.11
+
+[azure]
+aks-node-01 ansible_host=52.160.10.20

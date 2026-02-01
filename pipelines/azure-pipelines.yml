@@ -1,0 +1,77 @@
+trigger:
+  branches:
+    include:
+      - main
+      - release/*
+      - feature/*
+
+variables:
+  azureSubscription: 'YOUR-AZURE-SERVICE-CONNECTION'
+  azureContainerRegistry: 'youracr.azurecr.io'
+  imageName: 'myapp'
+  terraformWorkingDirectory: 'iac/terraform'
+  ansibleInventory: 'iac/ansible/hosts'
+
+stages:
+- stage: Build
+  displayName: 'Build and Scan'
+  jobs:
+  - job: Build
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - checkout: self
+    - task: SonarQubePrepare@5
+      inputs:
+        SonarQube: 'SonarQubeEndpoint'
+        scannerMode: 'CLI'
+    - script: |
+        docker build -t $(azureContainerRegistry)/$(imageName):$(Build.BuildId) .
+        docker push $(azureContainerRegistry)/$(imageName):$(Build.BuildId)
+      displayName: 'Build & Push Image'
+    - task: SonarQubeAnalyze@5
+    - task: SonarQubePublish@5
+
+- stage: Infra
+  displayName: 'Provision Infrastructure'
+  dependsOn: Build
+  jobs:
+  - job: Terraform
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        cd $(terraformWorkingDirectory)
+        terraform init -backend-config="storage_account_name=REPLACE" -backend-config="container_name=REPLACE"
+        terraform plan -out=tfplan -var="env=$(Build.SourceBranchName)"
+      displayName: 'Terraform Plan'
+    - task: ManualValidation@0
+      inputs:
+        notifyUsers: ''
+        instructions: 'Approve to apply terraform to target environment'
+    - script: |
+        cd $(terraformWorkingDirectory)
+        terraform apply -auto-approve tfplan
+      displayName: 'Terraform Apply'
+
+- stage: Deploy
+  displayName: 'Deploy Application'
+  dependsOn: Infra
+  jobs:
+  - job: AnsibleDeploy
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        # Retrieve secrets from Azure Key Vault (example using Azure CLI)
+        az keyvault secret show --vault-name "REPLACE" --name "ansible-ssh-key" --query value -o tsv > /tmp/ssh_key
+        ansible-playbook -i $(ansibleInventory) iac/ansible/deploy.yml --extra-vars "@vars/$(Build.SourceBranchName).json"
+      displayName: 'Run Ansible Playbook'
+  - job: SmokeTests
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - script: |
+        # Example smoke test
+        python tests/smoke_test.py --url "https://app.example.com/health"
+      displayName: 'Run smoke tests'

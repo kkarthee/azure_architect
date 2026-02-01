@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- DevOps architecture diagram (hybrid on-prem + Azure)
+     - Editable SVG: open in Inkscape / Illustrator or a text editor
+     - Use this SVG as the base for slides and export to PNG as needed
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <style>
+    .title { font: bold 20px sans-serif; fill:#0F172A; }
+    .label { font: 12px sans-serif; fill:#0F172A; }
+    .box { fill:#ffffff; stroke:#2B6CB0; stroke-width:2; rx:8; ry:8; }
+    .layer { fill:#F1F5F9; stroke:#E2E8F0; stroke-width:1; }
+    .arrow { stroke:#2B6CB0; stroke-width:2; fill:none; marker-end: url(#arrowhead); }
+    .small { font: 11px sans-serif; fill:#0F172A; }
+    .cloud { fill:#E6F0FF; stroke:#2B6CB0; stroke-width:1.5; rx:12; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2B6CB0"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="30" y="30" class="title">Hybrid DevOps Architecture — Azure + On‑Prem</text>
+
+  <!-- Top: Users / Tools -->
+  <g transform="translate(30,60)">
+    <rect x="0" y="0" width="420" height="130" class="layer"/>
+    <text x="12" y="24" class="label">Developer / Planning</text>
+
+    <!-- Azure Repos -->
+    <rect x="12" y="36" width="120" height="70" class="box"/>
+    <text x="18" y="60" class="small">Azure Repos</text>
+    <text x="18" y="76" class="small">(Git)</text>
+
+    <!-- Azure Boards -->
+    <rect x="150" y="36" width="120" height="70" class="box"/>
+    <text x="156" y="60" class="small">Azure Boards</text>
+    <text x="156" y="76" class="small">Work Items / Backlog</text>
+
+    <!-- SonarQube -->
+    <rect x="288" y="36" width="120" height="70" class="box"/>
+    <text x="294" y="60" class="small">SonarQube</text>
+    <text x="294" y="76" class="small">Code Quality</text>
+  </g>
+
+  <!-- CI/CD -->
+  <g transform="translate(480,60)">
+    <rect x="0" y="0" width="420" height="210" class="layer"/>
+    <text x="12" y="24" class="label">CI / CD</text>
+
+    <!-- Azure Pipelines -->
+    <rect x="14" y="36" width="160" height="70" class="box"/>
+    <text x="22" y="60" class="small">Azure Pipelines</text>
+    <text x="22" y="76" class="small">Build & Release</text>
+
+    <!-- Terraform -->
+    <rect x="190" y="36" width="120" height="70" class="box"/>
+    <text x="196" y="60" class="small">Terraform</text>
+    <text x="196" y="76" class="small">IaC</text>
+
+    <!-- Ansible -->
+    <rect x="190" y="116" width="120" height="70" class="box"/>
+    <text x="196" y="140" class="small">Ansible</text>
+    <text x="196" y="156" class="small">Config Mgmt / Deploy</text>
+
+    <!-- Azure Key Vault -->
+    <rect x="14" y="116" width="160" height="70" class="box"/>
+    <text x="22" y="140" class="small">Azure Key Vault</text>
+    <text x="22" y="156" class="small">Secrets & Certs</text>
+  </g>
+
+  <!-- Runtime: On-Prem -->
+  <g transform="translate(30,220)">
+    <rect x="0" y="0" width="670" height="300" class="layer"/>
+    <text x="12" y="24" class="label">On‑Premises (Private Data Center)</text>
+
+    <!-- On-prem network -->
+    <rect x="18" y="36" width="300" height="120" class="cloud"/>
+    <text x="26" y="60" class="small">Private Network</text>
+
+    <!-- On-prem VMs / Containers -->
+    <rect x="332" y="36" width="300" height="120" class="box"/>
+    <text x="340" y="60" class="small">On‑Prem App Hosts</text>
+    <text x="340" y="76" class="small">VMs / Containers</text>
+
+    <!-- ServiceNow connector -->
+    <rect x="18" y="168" width="140" height="80" class="box"/>
+    <text x="26" y="192" class="small">ServiceNow</text>
+    <text x="26" y="208" class="small">ITSM / Incidents</text>
+
+    <!-- On-prem Log forwarder -->
+    <rect x="170" y="168" width="140" height="80" class="box"/>
+    <text x="178" y="192" class="small">Log Forwarder</text>
+    <text x="178" y="208" class="small">Syslog / Forward to LA</text>
+
+    <!-- Arrow from On‑Prem to Cloud LA -->
+    <path d="M 450 96 L 620 96" class="arrow"/>
+    <text x="480" y="86" class="small">Secure VPN / ExpressRoute</text>
+  </g>
+
+  <!-- Runtime: Azure -->
+  <g transform="translate(720,220)">
+    <rect x="0" y="0" width="660" height="300" class="layer"/>
+    <text x="12" y="24" class="label">Azure Cloud</text>
+
+    <!-- Container Registry -->
+    <rect x="18" y="36" width="140" height="70" class="box"/>
+    <text x="26" y="60" class="small">Azure Container Registry (ACR)</text>
+
+    <!-- AKS -->
+    <rect x="178" y="36" width="170" height="120" class="box"/>
+    <text x="186" y="60" class="small">AKS / App Service</text>
+    <text x="186" y="76" class="small">Runtime Platform</text>
+
+    <!-- Log Analytics -->
+    <rect x="358" y="36" width="120" height="70" class="box"/>
+    <text x="364" y="60" class="small">Log Analytics</text>
+
+    <!-- App Insights -->
+    <rect x="498" y="36" width="120" height="70" class="box"/>
+    <text x="504" y="60" class="small">Application Insights</text>
+
+    <!-- Microsoft Defender -->
+    <rect x="18" y="130" width="140" height="70" class="box"/>
+    <text x="26" y="154" class="small">Microsoft Defender for Cloud</text>
+
+    <!-- Azure Sentinel -->
+    <rect x="178" y="130" width="180" height="70" class="box"/>
+    <text x="186" y="154" class="small">Azure Sentinel (SIEM)</text>
+
+    <!-- Monitor & Dashboards -->
+    <rect x="368" y="130" width="250" height="70" class="box"/>
+    <text x="376" y="154" class="small">Azure Monitor / Dashboards / Workbooks</text>
+
+    <!-- Service Map -->
+    <rect x="628" y="130" width="200" height="70" class="box"/>
+    <text x="636" y="154" class="small">Service Map / Dependency Modeling</text>
+
+    <!-- Connections from AKS to Log Analytics & App Insights -->
+    <path d="M 347 96 L 358 96" class="arrow"/>
+    <path d="M 428 96 L 498 96" class="arrow"/>
+  </g>
+
+  <!-- Observability & Feedback -->
+  <g transform="translate(30,540)">
+    <rect x="0" y="0" width="1350" height="140" class="layer"/>
+    <text x="12" y="24" class="label">Observability, Alerting, & Remediation</text>
+
+    <rect x="18" y="36" width="220" height="90" class="box"/>
+    <text x="26" y="60" class="small">Alerts (Monitor / AppInsights)</text>
+
+    <rect x="258" y="36" width="220" height="90" class="box"/>
+    <text x="266" y="60" class="small">Azure Sentinel Playbooks / AIOps</text>
+
+    <rect x="498" y="36" width="220" height="90" class="box"/>
+    <text x="506" y="60" class="small">Azure Automation / Runbooks</text>
+
+    <rect x="738" y="36" width="220" height="90" class="box"/>
+    <text x="746" y="60" class="small">ServiceNow / ITSM</text>
+
+    <rect x="978" y="36" width="220" height="90" class="box"/>
+    <text x="986" y="60" class="small">On‑call / PagerDuty / Teams</text>
+
+    <!-- arrows -->
+    <path d="M 130 126 L 320 126 L 320 126" class="arrow"/>
+    <path d="M 478 126 L 680 126" class="arrow"/>
+    <path d="M 918 126 L 1010 126" class="arrow"/>
+  </g>
+
+  <!-- Footer: Legend -->
+  <g transform="translate(30,700)">
+    <rect x="0" y="0" width="1350" height="180" class="layer"/>
+    <text x="12" y="24" class="label">Legend & Notes</text>
+    <text x="22" y="48" class="small">• Hybrid model uses secure connectivity (VPN/ExpressRoute).  • Terraform manages cloud infra.  • Ansible manages config across on‑prem & cloud.  • App telemetry → App Insights, container logs → Log Analytics → Sentinel.</text>
+  </g>
+</svg>

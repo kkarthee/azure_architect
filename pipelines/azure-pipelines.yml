@@ -1,0 +1,249 @@
+trigger:
+  branches:
+    include:
+      - main
+      - devops/*
+  paths:
+    include:
+      - '*'
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: buildConfiguration
+    value: 'Release'
+  - name: azureSubscription
+    value: 'Azure-Service-Connection'
+  - name: terraformVersion
+    value: '1.6.0'
+  - name: ansibleVersion
+    value: '2.15.0'
+
+stages:
+  - stage: Build
+    displayName: 'Build and Test'
+    jobs:
+      - job: BuildJob
+        displayName: 'Build Application'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Use .NET SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '8.x'
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+          
+          - script: |
+              echo "Building application..."
+              # Add your build commands here
+              # dotnet restore
+              # dotnet build --configuration $(buildConfiguration)
+            displayName: 'Build Application'
+          
+          - script: |
+              echo "Running unit tests..."
+              # Add your test commands here
+              # dotnet test --configuration $(buildConfiguration) --no-build
+            displayName: 'Run Unit Tests'
+          
+          - task: PublishTestResults@2
+            displayName: 'Publish Test Results'
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '**/*.trx'
+              mergeTestResults: true
+            condition: succeededOrFailed()
+
+  - stage: SecurityScan
+    displayName: 'Security Scanning'
+    dependsOn: Build
+    jobs:
+      - job: SecurityScanJob
+        displayName: 'Run Security Scans'
+        steps:
+          - script: |
+              echo "Running security scans..."
+              # Add security scanning tools
+              # npm audit
+              # snyk test
+            displayName: 'Dependency Scanning'
+          
+          - script: |
+              echo "Running SAST analysis..."
+              # Add static analysis tools
+            displayName: 'Static Analysis'
+
+  - stage: InfrastructureValidation
+    displayName: 'Infrastructure Validation'
+    dependsOn: Build
+    jobs:
+      - job: TerraformValidate
+        displayName: 'Validate Terraform'
+        steps:
+          - task: TerraformInstaller@0
+            displayName: 'Install Terraform'
+            inputs:
+              terraformVersion: $(terraformVersion)
+          
+          - script: |
+              cd iac/terraform
+              terraform init -backend=false
+              terraform validate
+              terraform fmt -check
+            displayName: 'Terraform Validation'
+      
+      - job: AnsibleValidate
+        displayName: 'Validate Ansible'
+        steps:
+          - script: |
+              pip install ansible==$(ansibleVersion)
+              cd iac/ansible
+              ansible-playbook deploy.yml --syntax-check
+            displayName: 'Ansible Syntax Check'
+
+  - stage: DeployDev
+    displayName: 'Deploy to Development'
+    dependsOn:
+      - SecurityScan
+      - InfrastructureValidation
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployDevJob
+        displayName: 'Deploy to Dev Environment'
+        environment: 'Development'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(terraformVersion)
+                
+                - script: |
+                    cd iac/terraform
+                    terraform init
+                    terraform plan -out=tfplan
+                    terraform apply -auto-approve tfplan
+                  displayName: 'Deploy Infrastructure'
+                  env:
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                
+                - script: |
+                    pip install ansible==$(ansibleVersion)
+                    cd iac/ansible
+                    ansible-playbook -i hosts deploy.yml
+                  displayName: 'Configure and Deploy Application'
+
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
+    dependsOn: DeployDev
+    condition: succeeded()
+    jobs:
+      - deployment: DeployStagingJob
+        displayName: 'Deploy to Staging Environment'
+        environment: 'Staging'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(terraformVersion)
+                
+                - script: |
+                    cd iac/terraform
+                    terraform init
+                    terraform workspace select staging || terraform workspace new staging
+                    terraform plan -out=tfplan
+                    terraform apply -auto-approve tfplan
+                  displayName: 'Deploy Infrastructure to Staging'
+                  env:
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                
+                - script: |
+                    pip install ansible==$(ansibleVersion)
+                    cd iac/ansible
+                    ansible-playbook -i hosts deploy.yml -e "environment=staging"
+                  displayName: 'Configure and Deploy Application to Staging'
+
+  - stage: DeployProduction
+    displayName: 'Deploy to Production'
+    dependsOn: DeployStaging
+    condition: succeeded()
+    jobs:
+      - deployment: DeployProductionJob
+        displayName: 'Deploy to Production Environment'
+        environment: 'Production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                
+                - task: TerraformInstaller@0
+                  displayName: 'Install Terraform'
+                  inputs:
+                    terraformVersion: $(terraformVersion)
+                
+                - script: |
+                    cd iac/terraform
+                    terraform init
+                    terraform workspace select production || terraform workspace new production
+                    terraform plan -out=tfplan
+                    terraform apply -auto-approve tfplan
+                  displayName: 'Deploy Infrastructure to Production'
+                  env:
+                    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+                    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+                    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+                    ARM_TENANT_ID: $(ARM_TENANT_ID)
+                
+                - script: |
+                    pip install ansible==$(ansibleVersion)
+                    cd iac/ansible
+                    ansible-playbook -i hosts deploy.yml -e "environment=production"
+                  displayName: 'Configure and Deploy Application to Production'
+                
+                - script: |
+                    echo "Running smoke tests..."
+                    # Add smoke tests for production validation
+                  displayName: 'Run Smoke Tests'
+
+  - stage: Monitoring
+    displayName: 'Setup Monitoring'
+    dependsOn: DeployProduction
+    condition: succeeded()
+    jobs:
+      - job: MonitoringSetup
+        displayName: 'Configure Monitoring and Alerts'
+        steps:
+          - script: |
+              echo "Configuring Azure Monitor..."
+              # Configure monitoring and alerting
+              # az monitor metrics alert create ...
+            displayName: 'Setup Alerts'
+          
+          - script: |
+              echo "Deployment completed successfully!"
+              echo "Environment: Production"
+              echo "Build ID: $(Build.BuildId)"
+              echo "Commit: $(Build.SourceVersion)"
+            displayName: 'Deployment Summary'

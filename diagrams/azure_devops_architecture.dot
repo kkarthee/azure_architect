@@ -1,0 +1,108 @@
+digraph AzureDevOpsArchitecture {
+    rankdir=LR;
+    node [shape=rectangle, style=filled, fillcolor="#e6f2fb", fontname="Segoe UI"];
+
+    subgraph cluster_onprem {
+        label = "On-Premises";
+        style=filled;
+        fillcolor="#d9eaf7";
+        OnPrem_Users [label="Developers/Architects"];
+        ServiceNow [label="ServiceNow"];
+        Ansible_OnPrem [label="Ansible"];
+        Terraform_OnPrem [label="Terraform"];
+    }
+
+    subgraph cluster_azure {
+        label = "Azure Cloud";
+        style=filled;
+        fillcolor="#b3d1f7";
+        AzureRepos [label="Azure Repos"];
+        AzureBoards [label="Azure Boards"];
+        AzurePipelines [label="Azure Pipelines"];
+        AzureKeyVault [label="Azure Key Vault"];
+        SonarQube [label="SonarQube"];
+        Terraform_Cloud [label="Terraform"];
+        Ansible_Cloud [label="Ansible"];
+        Python [label="Python Scripts"];
+        AzureAutomation [label="Azure Automation"];
+        AzureTestPlans [label="Azure Test Plans"];
+        AzureReleasePipelines [label="Azure Dev Release Pipelines"];
+        AzureContainerLog [label="Azure Container Log Analytics"];
+        AzureAppInsights [label="Azure Application Insights"];
+        AzureMonitor [label="Azure Monitor Insight"];
+        AzureMonitorDashboard [label="Azure Monitor Dashboard"];
+        AzureServiceMap [label="Azure Service Map"];
+        AzureWorkbooks [label="Azure Workbooks"];
+        AzurePortalInsight [label="Azure Portal Insight"];
+        AzureMonitorOps [label="Azure Monitor Ops Insight"];
+        AzureSentinel [label="Azure Sentinel"];
+        AzureSentinelAIOps [label="Azure Sentinel AIOps"];
+        Defender [label="Microsoft Defender for Cloud"];
+    }
+
+    # Environments
+    subgraph cluster_env {
+        label = "Environments";
+        style=dashed;
+        color="#7baaf7";
+        Dev [label="Dev"];
+        Test [label="Test"];
+        Stage [label="Stage"];
+        PreProd [label="PreProd"];
+        Prod [label="Prod"];
+    }
+
+    # Flows
+    OnPrem_Users -> AzureRepos;
+    OnPrem_Users -> ServiceNow;
+    ServiceNow -> AzureBoards;
+    AzureRepos -> AzurePipelines;
+    AzurePipelines -> SonarQube;
+    AzurePipelines -> Terraform_Cloud;
+    AzurePipelines -> Ansible_Cloud;
+    AzurePipelines -> Python;
+    AzurePipelines -> AzureKeyVault;
+    AzurePipelines -> AzureAutomation;
+    AzurePipelines -> AzureTestPlans;
+    AzurePipelines -> AzureReleasePipelines;
+    AzurePipelines -> Defender;
+    AzurePipelines -> AzureContainerLog;
+    AzurePipelines -> AzureAppInsights;
+    AzurePipelines -> AzureMonitor;
+    AzurePipelines -> AzureMonitorDashboard;
+    AzurePipelines -> AzureServiceMap;
+    AzurePipelines -> AzureWorkbooks;
+    AzurePipelines -> AzurePortalInsight;
+    AzurePipelines -> AzureMonitorOps;
+    AzurePipelines -> AzureSentinel;
+    AzurePipelines -> AzureSentinelAIOps;
+    AzurePipelines -> Dev;
+    AzurePipelines -> Test;
+    AzurePipelines -> Stage;
+    AzurePipelines -> PreProd;
+    AzurePipelines -> Prod;
+    
+    # Application-specific monitoring
+    Prod -> AzureAppInsights;
+    Prod -> AzureSentinelAIOps;
+    Prod -> AzureMonitor;
+    Prod -> AzurePortalInsight;
+    Prod -> AzureMonitorOps;
+    
+    # Dependency modeling
+    Prod -> AzureServiceMap;
+    
+    # Analytics
+    Prod -> AzureWorkbooks;
+    
+    # Security
+    Prod -> Defender;
+    
+    # Feedback loop
+    AzureBoards -> AzurePipelines;
+    AzureTestPlans -> AzureBoards;
+    
+    # On-prem tools to cloud
+    Ansible_OnPrem -> Ansible_Cloud;
+    Terraform_OnPrem -> Terraform_Cloud;
+}
